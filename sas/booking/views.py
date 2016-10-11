@@ -63,3 +63,6 @@ def confirm_booking(request, id):
 			return index(request)
 	else:
 		return index(request)
+
+def template_booking(request):
+	return render(request, 'booking/template_table.html', {})
