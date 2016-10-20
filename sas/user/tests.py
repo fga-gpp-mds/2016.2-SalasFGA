@@ -100,12 +100,15 @@ class UserProfileTest(TestCase):
         self.userprofile = UserProfile()
 
     def test_set_name(self):
-        self.userprofile.name("Gustavo Rodrigues Coelho")
-        self.assertEqual(self.userprofile.user.first_name, "Gustavo")
-        self.assertEqual(self.userprofile.user.last_name, "Rodrigues Coelho")
+        self.userprofile.name("Pedro Pereira Pinto")
+        self.assertEqual(self.userprofile.user.first_name, "Pedro")
+        self.assertEqual(self.userprofile.user.last_name, "Pereira Pinto")
 
     def test_get_full_name(self):
         name = "Pedro Pereira Pinto"
+        self.userprofile.name(name)
+        self.assertEqual(self.userprofile.full_name(), name)
+        name = "Renan Calheiros"
         self.userprofile.name(name)
         self.assertEqual(self.userprofile.full_name(), name)
 
@@ -209,8 +212,9 @@ class LoginTest(TestCase):
 
     def test_valid_user(self):
         logout(self.client)
-        response = self.client.post('/user/login/', {'email' : self.user.user.email, 'password' : '1234567'})
+        response = self.client.post('/user/login/', {'email' : self.user.user.email, 'password' : '1234567'}, follow = True)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [('/', 302)])
         self.assertContains(response, 'Hi, %s' % (self.user.full_name()))
 
 
