@@ -10,6 +10,7 @@ import operator
 from collections import OrderedDict
 import traceback
 from django.utils import formats
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
 HOURS = [(6, "06-08"), (8, "08-10"), (10, "10-12"), (12, "12-14"),
          (14, "14-16"), (16, "16-18"), (18, "18-20"), (20, "20-22"),
@@ -206,14 +207,17 @@ def search_booking_table(request):
 def search_booking(request):
     if request.user.is_authenticated():
         bookings = Booking.objects.filter(user=request.user)
-        return render(request, 'booking/searchBooking.html', {'bookings': bookings})
+        return render(request, 'booking/searchBooking.html',
+                      {'bookings': bookings})
     else:
         return redirect("index")
+
 
 def all_bookings(request):
     if request.user.profile_user.is_admin():
         bookings = Booking.objects.all()
-        return render(request, 'booking/searchBooking.html', {'bookings': bookings})
+        return render(request, 'booking/searchBooking.html',
+                      {'bookings': bookings})
     else:
         return redirect("index")
 
@@ -252,7 +256,8 @@ def delete_booking(request, id):
     print(id)
     try:
         booking = Booking.objects.get(pk=id)
-        if (request.user.profile_user.is_admin() or booking.user.id == request.user.id):
+        if request.user.profile_user.is_admin() or \
+                booking.user.id == request.user.id:
             booking.delete()
             messages.success(request, _('Booking deleted!'))
         else:
@@ -265,15 +270,11 @@ def delete_booking(request, id):
 @login_required(login_url='/?showLoginModal=yes')
 def delete_booktime(request, booking_id, booktime_id):
     try:
-        booktime = BookTime.objects.get(pk=booktime_id)
         booking = Booking.objects.get(pk=booking_id)
-        if request.user.profile_user.is_admin() or booking.user.id == request.user.id:
-            booking.time.remove(booktime)
-            booktime.delete()
-            Booking.objects.filter(time=None).delete()
-            messages.success(request, _('Booking deleted!'))
-        else:
-            messages.error(request, _('You cannot delete this booking.'))
-    except:
+        booking.delete_booktime(booktime_id, request.user)
+        messages.success(request, _('Booking deleted!'))
+    except PermissionDenied:
+        messages.error(request, _('You cannot delete this booking.'))
+    except (ObjectDoesNotExist, Booking.DoesNotExist):
         messages.error(request, _('Booking not found.'))
     return search_booking(request)
