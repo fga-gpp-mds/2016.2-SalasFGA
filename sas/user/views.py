@@ -15,7 +15,7 @@ from django.views import View
 
 class NewUserView(FormView):
     template_name = "user/newUser.html"
-    form_class = UserForm
+    form_class = NewUserForm
     success_url = "/"
 
     def form_valid(self, form):
